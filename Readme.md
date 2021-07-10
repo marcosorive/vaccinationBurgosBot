@@ -7,3 +7,6 @@ It notifies you when the vaccination points/dates in the province of Burgos chan
 Because the health department of Castilla y León does not notify you when it's your time to get vaccinated. And I got tired of checking the website.
 ## Data source 💾
 [Here](https://www.saludcastillayleon.es/es/covid-19-poblacion/vacunacion-covid-19/lugares-vacunacion/burgos)
+
+# Try it!
+[https://t.me/VacunasEnBurgosBot](https://t.me/VacunasEnBurgosBot) (Might not work if my raspberry pi is dead)
