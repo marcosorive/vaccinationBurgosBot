@@ -136,15 +136,16 @@ if(not os.path.exists(VACCINE_PLACES_FILENAME)):
     write_vaccine_places(VACCINE_URL_BURGOS, VACCINE_PLACES_FILENAME)
     print('Initial file created')
 
-updater = Updater(token=os.environ.get('BOT_API_KEY'), use_context=True)
+if __name__ == '__main__':
+    updater = Updater(token=os.environ.get('BOT_API_KEY'), use_context=True)
 
-dispatcher = updater.dispatcher
+    dispatcher = updater.dispatcher
 
-job = updater.job_queue
-job.run_repeating(update_vaccine_bot_action, int(INTERVAL_CHECK_IN_SECS), 5)
+    job = updater.job_queue
+    job.run_repeating(update_vaccine_bot_action, int(INTERVAL_CHECK_IN_SECS), 5)
 
-dispatcher.add_handler(CommandHandler("start", start_bot_action))
-dispatcher.add_handler(CommandHandler("stop", stop_bot_action))
+    dispatcher.add_handler(CommandHandler("start", start_bot_action))
+    dispatcher.add_handler(CommandHandler("stop", stop_bot_action))
 
-updater.start_polling()
-updater.idle()
+    updater.start_polling()
+    updater.idle()
