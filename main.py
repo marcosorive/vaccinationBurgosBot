@@ -9,8 +9,9 @@ load_dotenv()
 
 VACCINE_PLACES_FILENAME = 'vaccine_places.txt'
 TEMPORAL_VACCINE_FILENAME = 'vaccine_places_temporal.txt'
-VACCINE_URL_BURGOS = 'https://www.saludcastillayleon.es/es/covid-19-poblacion/vacunacion-covid-19/lugares-vacunacion/burgos'
+VACCINE_URL_BURGOS = os.environ.get('DATA_URL') or 'https://www.saludcastillayleon.es/es/covid-19-poblacion/vacunacion-covid-19/lugares-vacunacion/burgos'
 CHAT_ID_FILENAME = 'chat_ids.txt'
+INTERVAL_CHECK_IN_SECS = os.environ.get('TIME_TO_CHECK_SECS') or 3600
 
 
 '''
@@ -53,16 +54,18 @@ def rename_file(old_name: str, new_name: str):
 
 
 def add_user_to_list(chat_id):
-    # Check if already added!
     if os.path.exists(CHAT_ID_FILENAME):
         chat_ids = get_all_chat_id()
+        if chat_ids[0]=='':
+            chat_ids.pop(0)
         if str(chat_id) in chat_ids:
             return False
+        chat_ids.append(str(chat_id))
         operation = 'a'
-        text_to_write = "\n%s" % chat_id
+        text_to_write = '\n'.join(chat_ids)
     else:
         operation = 'w'
-        text_to_write = "%s" % chat_id
+        text_to_write = str(chat_id)
     with open(CHAT_ID_FILENAME, operation) as file:
         file.write(text_to_write)
     return True
@@ -138,7 +141,7 @@ updater = Updater(token=os.environ.get('BOT_API_KEY'), use_context=True)
 dispatcher = updater.dispatcher
 
 job = updater.job_queue
-job.run_repeating(update_vaccine_bot_action, 3600, 5)
+job.run_repeating(update_vaccine_bot_action, int(INTERVAL_CHECK_IN_SECS), 5)
 
 dispatcher.add_handler(CommandHandler("start", start_bot_action))
 dispatcher.add_handler(CommandHandler("stop", stop_bot_action))
