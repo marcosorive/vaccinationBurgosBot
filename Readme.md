@@ -10,8 +10,8 @@ Because the health department of Castilla y León does not notify you when it's 
 
 # Try it!
 *Might not work if my raspberry pi is dead*
-[Burgos](https://t.me/VacunasEnBurgosBot)
-[León](https://t.me/VacunasEnLeonBot)
+- For [Burgos](https://t.me/VacunasEnBurgosBot)
+- For [León](https://t.me/VacunasEnLeonBot)
 
 # Run the docker container
 - You need a .env file with a variable called BOT_API_KEY that contains the telegram api key.
