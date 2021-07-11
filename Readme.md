@@ -10,3 +10,8 @@ Because the health department of Castilla y León does not notify you when it's 
 
 # Try it!
 [https://t.me/VacunasEnBurgosBot](https://t.me/VacunasEnBurgosBot) (Might not work if my raspberry pi is dead)
+
+# Run the docker container
+You need a .env file with a variable called BOT_API_KEY that contains the telegram api key.
+```sudo docker run --env-file ./.env -v $(pwd)/chat_ids.txt:/app/chat_ids.txt vaccinationburgosbot:1.0```
+
