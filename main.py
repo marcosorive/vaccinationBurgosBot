@@ -9,19 +9,18 @@ load_dotenv()
 
 VACCINE_PLACES_FILENAME = 'vaccine_places.txt'
 TEMPORAL_VACCINE_FILENAME = 'vaccine_places_temporal.txt'
-VACCINE_URL_BURGOS = os.environ.get('DATA_URL') or 'https://www.saludcastillayleon.es/es/covid-19-poblacion/vacunacion-covid-19/lugares-vacunacion/burgos'
+VACCINE_URL_BURGOS = os.environ.get(
+    'DATA_URL') or 'https://www.saludcastillayleon.es/es/covid-19-poblacion/vacunacion-covid-19/lugares-vacunacion/burgos'
 CHAT_ID_FILENAME = 'chat_ids.txt'
 INTERVAL_CHECK_IN_SECS = os.environ.get('TIME_TO_CHECK_SECS') or 3600
 
 
-'''
-This function writes a file called vaccine_places.txt with the list of vaccine places for a city in Castilla y León.
-url: is the url to request. Should look like this: https://www.saludcastillayleon.es/es/covid-19-poblacion/vacunacion-covid-19/lugares-vacunacion/burgos
-filename: the filename were the vaccination places are gonna be stored.
-'''
-
-
 def write_vaccine_places(url: str, filename: str) -> None:
+    '''
+        This function writes a file called vaccine_places.txt with the list of vaccine places for a city in Castilla y León.
+        url: is the url to request. Should look like this: https://www.saludcastillayleon.es/es/covid-19-poblacion/vacunacion-covid-19/lugares-vacunacion/burgos
+        filename: the filename were the vaccination places are gonna be stored.
+    '''
     r = requests.get(url)
     soup = BeautifulSoup(r.text, 'lxml')
     list_of_files = soup.find_all('span', {'class': 'resourceData2'})
@@ -56,7 +55,7 @@ def rename_file(old_name: str, new_name: str):
 def add_user_to_list(chat_id):
     if os.path.exists(CHAT_ID_FILENAME):
         chat_ids = get_all_chat_id()
-        if chat_ids[0]=='':
+        if chat_ids[0] == '':
             chat_ids.pop(0)
         if str(chat_id) in chat_ids:
             return False
@@ -131,18 +130,19 @@ def update_vaccine_bot_action(context: CallbackContext):
         print('Files are equal, no changes in vaccines.')
 
 
-if(not os.path.exists(VACCINE_PLACES_FILENAME)):
-    print('Initial file did not exist. Creating...')
-    write_vaccine_places(VACCINE_URL_BURGOS, VACCINE_PLACES_FILENAME)
-    print('Initial file created')
-
 if __name__ == '__main__':
+    if(not os.path.exists(VACCINE_PLACES_FILENAME)):
+        print('Initial file did not exist. Creating...')
+        write_vaccine_places(VACCINE_URL_BURGOS, VACCINE_PLACES_FILENAME)
+        print('Initial file created')
+
     updater = Updater(token=os.environ.get('BOT_API_KEY'), use_context=True)
 
     dispatcher = updater.dispatcher
 
     job = updater.job_queue
-    job.run_repeating(update_vaccine_bot_action, int(INTERVAL_CHECK_IN_SECS), 5)
+    job.run_repeating(update_vaccine_bot_action,
+                      int(INTERVAL_CHECK_IN_SECS), 5)
 
     dispatcher.add_handler(CommandHandler("start", start_bot_action))
     dispatcher.add_handler(CommandHandler("stop", stop_bot_action))
