@@ -13,5 +13,5 @@ Because the health department of Castilla y León does not notify you when it's 
 
 # Run the docker container
 You need a .env file with a variable called BOT_API_KEY that contains the telegram api key.
-```sudo docker run --env-file ./.env -v $(pwd)/chat_ids.txt:/app/chat_ids.txt vaccinationburgosbot:1.0```
+```sudo docker run --env-file ./.env -v $(pwd)/chat_ids.txt:/app/chat_ids.txt morive/vaccinationburgosbot:1.0```
 
