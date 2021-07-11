@@ -9,9 +9,19 @@ Because the health department of Castilla y León does not notify you when it's 
 [Here](https://www.saludcastillayleon.es/es/covid-19-poblacion/vacunacion-covid-19/lugares-vacunacion/burgos)
 
 # Try it!
-[https://t.me/VacunasEnBurgosBot](https://t.me/VacunasEnBurgosBot) (Might not work if my raspberry pi is dead)
+*Might not work if my raspberry pi is dead*
+[Burgos](https://t.me/VacunasEnBurgosBot)
+[León](https://t.me/VacunasEnLeonBot)
 
 # Run the docker container
-You need a .env file with a variable called BOT_API_KEY that contains the telegram api key.
-```sudo docker run --env-file ./.env -v $(pwd)/chat_ids.txt:/app/chat_ids.txt morive/vaccinationburgosbot:1.0```
+- You need a .env file with a variable called BOT_API_KEY that contains the telegram api key.
+- You also need a chat_ids.txt file where docker can mount the volume. It should be empty for the first execution.
+- The container is built for linux/amd64 and linux/arm/v7.
+Use the following script to run it:
+```sudo docker run -d --env-file ./.env -v $(pwd)/chat_ids.txt:/app/chat_ids.txt morive/vaccinationburgosbot:latest```
+
+# Customization
+There are 2 other environmental variable that you can use:
+- **DATA_URL**: to change the URL to request the data. You can find the valid ones [here](https://www.saludcastillayleon.es/es/covid-19-poblacion/vacunacion-covid-19/lugares-vacunacion) The default URL is for Burgos.
+- **TIME_TO_CHECK_SECS**: seconds between checks. Defaults to 3600 seconds. (1hour)
 
