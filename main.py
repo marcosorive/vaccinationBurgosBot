@@ -60,7 +60,7 @@ def rename_file(old_name: str, new_name: str):
 def add_user_to_list(chat_id: str) -> bool:
     logging.info('Adding user with ID' + chat_id)
     try:
-        to_add = {"id": str(chat_id)}
+        to_add = {"id": chat_id}
         if(not chat_ids_collection.find_one(to_add)):
             chat_ids_collection.insert_one(to_add)
             logging.info("Added.")
@@ -77,7 +77,7 @@ def add_user_to_list(chat_id: str) -> bool:
 def delete_user_from_list(chat_id: str) -> bool:
     logging.info('Deleting user user with ID' + chat_id)
     try:
-        to_delete = {"id": str(chat_id)}
+        to_delete = {"id": chat_id}
         deleted_result = chat_ids_collection.delete_one(to_delete).deleted_count == 1
         if(deleted_result):
             logging.info('Deleted successful')
@@ -100,7 +100,7 @@ def get_all_chat_id() -> list:
 
 def start_bot_action(update: Update, context: CallbackContext) -> None:
     user = update.effective_user
-    if add_user_to_list(user.id):
+    if add_user_to_list(str(user.id)):
         update.message.reply_markdown_v2(
             fr'Hola {user.mention_markdown_v2()}\! Recibirás notificaciones de las vacunas'
         )
@@ -110,7 +110,7 @@ def start_bot_action(update: Update, context: CallbackContext) -> None:
 
 def stop_bot_action(update: Update, context: CallbackContext) -> None:
     id = update.effective_user.id
-    if delete_user_from_list(id):
+    if delete_user_from_list(str(id)):
         update.message.reply_text('No recibirás más notificaciones')
     else:
         update.message.reply_text('Parece que no estabas suscrito')
