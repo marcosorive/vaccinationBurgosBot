@@ -1,12 +1,16 @@
 import requests
 import os
+import ssl
 from bs4 import BeautifulSoup
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
 from dotenv import load_dotenv
+from pymongo import MongoClient
+import logging
 
 load_dotenv()
 
+MONGOURI = os.environ.get("MONGO_URI")
 VACCINE_PLACES_FILENAME = 'vaccine_places.txt'
 TEMPORAL_VACCINE_FILENAME = 'vaccine_places_temporal.txt'
 VACCINE_URL_BURGOS = os.environ.get(
@@ -33,7 +37,7 @@ def write_vaccine_places(url: str, filename: str) -> None:
                 file.write("%s\n" % element)
 
 
-def are_file_equal(filename1: str, filename2: str):
+def are_file_equal(filename1: str, filename2: str) -> None:
     with open(filename1, 'r') as file1:
         lines_from_1 = file1.read().split('\n')
     with open(filename2, 'r') as file2:
@@ -41,53 +45,56 @@ def are_file_equal(filename1: str, filename2: str):
     return lines_from_1 == lines_from_2
 
 
-def delete_file_with_name(filename: str):
+def delete_file_with_name(filename: str) -> None:
     if os.path.exists(filename):
         os.remove(filename)
+        logging.info("File with name " + filename + " deleted")
     else:
-        print("The file does not exist")
+        logging.info("The file does not exist")
 
 
 def rename_file(old_name: str, new_name: str):
     os.rename(old_name, new_name)
 
 
-def add_user_to_list(chat_id):
-    if os.path.exists(CHAT_ID_FILENAME):
-        chat_ids = get_all_chat_id()
-        if chat_ids[0] == '':
-            chat_ids.pop(0)
-        if str(chat_id) in chat_ids:
+def add_user_to_list(chat_id: str) -> bool:
+    logging.info('Adding user with ID' + chat_id)
+    try:
+        to_add = {"id": str(chat_id)}
+        if(not chat_ids_collection.find_one(to_add)):
+            chat_ids_collection.insert_one(to_add)
+            logging.info("Added.")
+            return True
+        else:
+            logging.info('It was already added')
             return False
-        chat_ids.append(str(chat_id))
-        operation = 'a'
-        text_to_write = '\n'.join(chat_ids)
-    else:
-        operation = 'w'
-        text_to_write = str(chat_id)
-    with open(CHAT_ID_FILENAME, operation) as file:
-        file.write(text_to_write)
-    return True
-
-
-def delete_user_from_list(chat_id):
-    chat_ids = get_all_chat_id()
-    string_id = str(chat_id)
-    if os.path.exists(CHAT_ID_FILENAME) and string_id in chat_ids:
-        chat_ids.remove(string_id)
-        with open(CHAT_ID_FILENAME, 'w') as file:
-            file.write('\n'.join(chat_ids))
-        return True
-    else:
+    except Exception as e:
+        logging.error('Error adding user' + e)
         return False
 
 
-def get_all_chat_id():
-    if os.path.exists(CHAT_ID_FILENAME):
-        with open(CHAT_ID_FILENAME) as filename:
-            chat_ids = filename.read().split('\n')
-        return chat_ids
-    else:
+
+def delete_user_from_list(chat_id: str) -> bool:
+    logging.info('Deleting user user with ID' + chat_id)
+    try:
+        to_delete = {"id": str(chat_id)}
+        deleted_result = chat_ids_collection.delete_one(to_delete).deleted_count == 1
+        if(deleted_result):
+            logging.info('Deleted successful')
+        else:
+            logging.info('Couldn\'t delete, it wasn\'t added probably.')
+        return deleted_result
+    except Exception as e:
+        logging.error(e)
+        return False
+
+
+def get_all_chat_id() -> list:
+    try:
+        remote_ids = chat_ids_collection.find()
+        ids = [i["id"] for i in remote_ids ]
+        return ids
+    except:
         return list()
 
 
@@ -110,13 +117,13 @@ def stop_bot_action(update: Update, context: CallbackContext) -> None:
 
 
 def update_vaccine_bot_action(context: CallbackContext):
-    print('Creating temporal file to compare')
+    logging.info('Creating temporal file to compare')
     write_vaccine_places(VACCINE_URL_BURGOS, TEMPORAL_VACCINE_FILENAME)
-    print('Temporal file created')
+    logging.info('Temporal file created')
     equal_files = are_file_equal(
         VACCINE_PLACES_FILENAME, TEMPORAL_VACCINE_FILENAME)
     if not equal_files:
-        print('There are changes, notifying the user and changing file names')
+        logging.info('There are changes, notifying the user and changing file names')
         chat_ids = get_all_chat_id()
         message = 'Parece que se ha actualizado la lista de las vacunas. Compruébalo  haciendo [click aqui](' + \
             VACCINE_URL_BURGOS+')'
@@ -124,28 +131,36 @@ def update_vaccine_bot_action(context: CallbackContext):
             context.bot.sendMessage(
                 chat_id=id, text=message, parse_mode='Markdown')
         delete_file_with_name(VACCINE_PLACES_FILENAME)
-        rename_file(TEMPORAL_VACCINE_FILENAME, VACCINE_PLACES_FILENAME)
+        rename_file(TEMPORAL_VACCINE_FILENAME,VACCINE_PLACES_FILENAME)
+        delete_file_with_name(TEMPORAL_VACCINE_FILENAME)
     else:
         delete_file_with_name(TEMPORAL_VACCINE_FILENAME)
-        print('Files are equal, no changes in vaccines.')
+        logging.info('Files are equal, no changes in vaccines.')
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO, filename='bot.log', encoding='utf-8')
+    logging.info("Connecting to database...")
     if(not os.path.exists(VACCINE_PLACES_FILENAME)):
-        print('Initial file did not exist. Creating...')
+        logging.info('Initial file did not exist. Creating...')
         write_vaccine_places(VACCINE_URL_BURGOS, VACCINE_PLACES_FILENAME)
-        print('Initial file created')
-
+        logging.info('Initial file created')
+    client = MongoClient(MONGOURI, ssl_cert_reqs=ssl.CERT_NONE)
+    db = client["vaccinationBurgosBot"]
+    chat_ids_collection = db["chat_ids"]
+    vaccination_places_collection = db["vaccination_places"]
+    logging.info("Connected.")
     updater = Updater(token=os.environ.get('BOT_API_KEY'), use_context=True)
 
     dispatcher = updater.dispatcher
 
     job = updater.job_queue
-    job.run_repeating(update_vaccine_bot_action,
-                      int(INTERVAL_CHECK_IN_SECS), 5)
+    job.run_repeating(update_vaccine_bot_action,int(INTERVAL_CHECK_IN_SECS), 5)
 
     dispatcher.add_handler(CommandHandler("start", start_bot_action))
     dispatcher.add_handler(CommandHandler("stop", stop_bot_action))
 
     updater.start_polling()
     updater.idle()
+    logging.info("Bot started.")
+

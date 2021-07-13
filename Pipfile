@@ -9,6 +9,8 @@ beautifulsoup4 = "*"
 lxml = "*"
 python-telegram-bot = "*"
 python-dotenv = "*"
+pymongo = "*"
+dnspython = "*"
 
 [dev-packages]
 autopep8 = "*"

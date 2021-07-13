@@ -17,10 +17,11 @@ Because the health department of Castilla y León does not notify you when it's 
 
 # Run the docker container
 - You need a .env file with a variable called BOT_API_KEY that contains the telegram api key.
-- You also need a chat_ids.txt file where docker can mount the volume. It should be empty for the first execution.
+- You also need another env variable with the mongo DB URL.
+- You also need a bot.log file where docker can mount the volume. It should be empty for the first execution. 
 - The container is built for linux/amd64 and linux/arm/v7.
 Use the following script to run it:
-```sudo docker run -d --env-file ./.env -v $(pwd)/chat_ids.txt:/app/chat_ids.txt morive/vaccinationburgosbot:latest```
+```sudo docker run -d --env-file ./.env -v $(pwd)/bot.log:/app/bot.log morive/vaccinationburgosbot:latest```
 
 # Customization
 There are 2 other environmental variable that you can use:
